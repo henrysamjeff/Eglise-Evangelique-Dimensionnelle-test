@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Événements — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html" class="active">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+            <h1 class="section-title">Nos Événements & Rassemblements</h1>
+            <p class="section-subtitle">Rejoignez-nous lors de nos différents cultes, conférences et activités communautaires.</p>
+        </section>
+
+        <!-- Actions Admin / Pastor -->
+        <div id="admin-event-actions" style="display:none; text-align:right; margin-bottom:1.5rem;">
+            <button class="btn btn-primary" onclick="openModal('modal-event')">➕ Ajouter un Événement</button>
+        </div>
+
+        <!-- Filtres par catégories & Période -->
+        <div style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center; margin-bottom:2.5rem;" id="category-tabs">
+            <button class="btn btn-secondary btn-sm active-tab" data-cat="Toutes">Toutes les catégories</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Cultes">Cultes</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Évangélisation">Évangélisation</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Conférences">Conférences</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Jeunesse">Jeunesse</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Femmes">Femmes</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Hommes">Hommes</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Études bibliques">Études bibliques</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Retraites">Retraites</button>
+            <button class="btn btn-secondary btn-sm" data-cat="Baptêmes">Baptêmes</button>
+        </div>
+
+        <!-- Grid Événements -->
+        <div class="grid-container" id="events-grid">
+            <!-- Dynamique via JS -->
+        </div>
+    </main>
+
+    <!-- Modale Ajout / Édition d'Événement -->
+    <div class="modal-overlay" id="modal-event">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('modal-event')">&times;</button>
+            <h2 style="margin-bottom:1rem;" id="event-modal-title">Créer un Événement</h2>
+            <form id="form-event" enctype="multipart/form-data">
+                <input type="hidden" id="event-id">
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Titre de l'événement</label>
+                    <input type="text" id="event-title" style="width:100%;" required>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Description</label>
+                    <textarea id="event-desc" rows="3" style="width:100%;" required></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label style="font-size:0.85rem;">Date</label>
+                        <input type="date" id="event-date" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;">Heure</label>
+                        <input type="time" id="event-time" style="width:100%;" required>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Lieu / Adresse</label>
+                    <input type="text" id="event-loc" style="width:100%;" required>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Catégorie</label>
+                    <select id="event-cat" style="width:100%;" required>
+                        <option value="Cultes">Cultes</option>
+                        <option value="Évangélisation">Évangélisation</option>
+                        <option value="Conférences">Conférences</option>
+                        <option value="Jeunesse">Jeunesse</option>
+                        <option value="Femmes">Femmes</option>
+                        <option value="Hommes">Hommes</option>
+                        <option value="Études bibliques">Études bibliques</option>
+                        <option value="Retraites">Retraites</option>
+                        <option value="Baptêmes">Baptêmes</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="font-size:0.85rem;">Image d'illustration (optionnelle)</label>
+                    <input type="file" id="event-img" accept="image/*" style="width:100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Enregistrer l'Événement</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle.</p></div>
+    </footer>
+
+    <script>
+        let currentCat = 'Toutes';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadEvents();
+            setupTabs();
+            setupAdminControls();
+        });
+
+        async function setupAdminControls() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (['admin', 'pastor'].includes(data.user.role)) {
+                        document.getElementById('admin-event-actions').style.display = 'block';
+                    }
+                }
+            } catch (err) {}
+        }
+
+        async function loadEvents() {
+            try {
+                const res = await fetch(`/api/events?category=${encodeURIComponent(currentCat)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const grid = document.getElementById('events-grid');
+                    grid.innerHTML = '';
+
+                    if (data.events.length === 0) {
+                        grid.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column: 1/-1;">Aucun événement trouvé dans cette catégorie.</p>`;
+                        return;
+                    }
+
+                    const isStaff = currentUser && ['admin', 'pastor'].includes(currentUser.role);
+
+                    data.events.forEach(e => {
+                        let staffBtns = '';
+                        if (isStaff) {
+                            staffBtns = `
+                                <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+                                    <button class="btn btn-secondary btn-sm" onclick="togglePublishEvent(${e.id})">${e.is_published ? 'Masquer' : 'Publier'}</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id})">Supprimer</button>
+                                </div>
+                            `;
+                        }
+
+                        grid.innerHTML += `
+                            <div class="card">
+                                <div class="card-img-wrapper">
+                                    <img src="${e.image_url}" alt="${e.title}">
+                                    <span class="card-badge">${e.category}</span>
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="card-title">${e.title}</h3>
+                                    <p class="card-text">${e.description}</p>
+                                    <div class="card-meta">
+                                        <span>📅 ${formatDate(e.event_date)} à ${e.event_time}</span>
+                                        <span>📍 ${e.location}</span>
+                                    </div>
+                                    ${staffBtns}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        function setupTabs() {
+            const tabs = document.querySelectorAll('#category-tabs button');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.style.background = 'rgba(255,255,255,0.08)');
+                    tab.style.background = 'var(--primary)';
+                    currentCat = tab.getAttribute('data-cat');
+                    loadEvents();
+                });
+            });
+        }
+
+        document.getElementById('form-event').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('title', document.getElementById('event-title').value);
+            formData.append('description', document.getElementById('event-desc').value);
+            formData.append('event_date', document.getElementById('event-date').value);
+            formData.append('event_time', document.getElementById('event-time').value);
+            formData.append('location', document.getElementById('event-loc').value);
+            formData.append('category', document.getElementById('event-cat').value);
+            
+            const fileInput = document.getElementById('event-img');
+            if (fileInput.files[0]) {
+                formData.append('image', fileInput.files[0]);
+            }
+
+            try {
+                const res = await fetch('/api/events', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'success');
+                    closeModal('modal-event');
+                    loadEvents();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Erreur enregistrement événement', 'error');
+            }
+        });
+
+        async function togglePublishEvent(id) {
+            try {
+                const res = await fetch(`/api/events/${id}/toggle-publish`, { method: 'PATCH' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'info');
+                    loadEvents();
+                }
+            } catch (err) {}
+        }
+
+        async function deleteEvent(id) {
+            if (!confirm('Voulez-vous vraiment supprimer cet événement ?')) return;
+            try {
+                const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'success');
+                    loadEvents();
+                }
+            } catch (err) {}
+        }
+    </script>
+</body>
+</html>

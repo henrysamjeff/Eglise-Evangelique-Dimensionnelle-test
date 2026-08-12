@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messagerie & Chat — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper" style="padding-top:1rem; padding-bottom:1rem;">
+
+        <!-- Interface de Chat Réactive -->
+        <div class="chat-container">
+            <!-- Panneau Gauche : Recherche & Conversations -->
+            <div class="chat-sidebar" id="chat-sidebar">
+                <div class="chat-search-box">
+                    <span class="chat-search-icon">🔍</span>
+                    <input type="text" class="chat-search-input" id="search-user-input" placeholder="Rechercher par @handle (ex: @david)...">
+                </div>
+
+                <!-- Résultats de recherche utilisateur (Section 14) -->
+                <div id="search-results-list" style="display:none; max-height:220px; overflow-y:auto; border-bottom:1px solid var(--border-glass); background:rgba(0,0,0,0.3);">
+                </div>
+
+                <div class="chat-conv-list" id="conv-list">
+                    <p style="text-align:center; color:var(--text-muted); padding:2rem;">Chargement des discussions...</p>
+                </div>
+            </div>
+
+            <!-- Panneau Droit : Discussion Active -->
+            <div class="chat-main" id="chat-main">
+                <!-- Header de la conversation active -->
+                <div class="chat-header" id="active-chat-header" style="display:none;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <img src="/images/default-avatar.png" id="active-peer-avatar" class="conv-avatar">
+                        <div>
+                            <h4 id="active-peer-name" style="font-family:var(--font-heading); color:var(--text-main);">---</h4>
+                            <span id="active-peer-username" style="font-size:0.8rem; color:var(--text-muted);">---</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="reportActivePeer()">⚠️ Signaler</button>
+                        <button class="btn btn-secondary btn-sm" onclick="blockActivePeer()">🚫 Bloquer</button>
+                    </div>
+                </div>
+
+                <!-- Zone d'affichage des messages -->
+                <div class="chat-messages-area" id="messages-area">
+                    <div style="text-align:center; color:var(--text-muted); margin:auto;">
+                        <span style="font-size:3rem; display:block;">💬</span>
+                        <h3 style="color:var(--text-main); margin-bottom:0.5rem;">Messagerie Privée Église Évangelique Dimensionnelle</h3>
+                        <p style="font-size:0.9rem;">Recherchez un utilisateur grâce à son <strong>@username</strong> pour démarrer un échange instantané.</p>
+                    </div>
+                </div>
+
+                <!-- Boîte de prévisualisation de réponse -->
+                <div id="reply-preview-box" style="display:none; padding:0.5rem 1.5rem; background:rgba(255,255,255,0.05); border-top:1px solid var(--border-glass); font-size:0.85rem; color:var(--text-muted); justify-content:space-between; align-items:center;">
+                    <span>Repondre à : <strong id="reply-target-text">...</strong></span>
+                    <button onclick="cancelReply()" style="background:transparent; color:var(--text-muted); font-size:1.2rem;">&times;</button>
+                </div>
+
+                <!-- Zone de saisie et d'envoi du message -->
+                <div class="chat-input-bar" id="chat-input-bar" style="display:none;">
+                    <button class="btn-icon" onclick="triggerFileInput()" title="Joindre un fichier">📎</button>
+                    <input type="file" id="chat-file-input" style="display:none;" onchange="handleFileSelected(event)">
+                    
+                    <input type="text" id="chat-message-input" placeholder="Écrivez votre message..." style="flex:1;">
+                    
+                    <!-- Enregistreur Vocal (Section 16) -->
+                    <button class="btn-icon voice-record-btn" id="btn-voice-record" title="Enregistrer une note vocale">🎙️</button>
+                    
+                    <button class="btn btn-primary" onclick="sendMessage()" style="padding:0.6rem 1.25rem;">Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentConversationId = null;
+        let currentPeer = null;
+        let replyToId = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            if (!currentUser) {
+                showToast('Veuillez vous connecter pour accéder au chat.', 'error');
+                setTimeout(() => window.location.href = '/', 1500);
+                return;
+            }
+
+            loadConversations();
+            setupSearch();
+            setupSocketListeners();
+            setupVoiceRecorder();
+        });
+
+        // 1. Charger les conversations
+        async function loadConversations() {
+            try {
+                const res = await fetch('/api/chat/conversations');
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = document.getElementById('conv-list');
+                    list.innerHTML = '';
+
+                    if (data.conversations.length === 0) {
+                        list.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.85rem;">Aucune conversation active. Recherchez un membre ci-dessus.</p>`;
+                        return;
+                    }
+
+                    data.conversations.forEach(c => {
+                        const activeClass = c.conversation_id === currentConversationId ? 'active' : '';
+                        const unreadBadge = c.unread_count > 0 ? `<span class="notif-badge">${c.unread_count}</span>` : '';
+
+                        list.innerHTML += `
+                            <div class="conv-item ${activeClass}" onclick="openConversation(${c.conversation_id}, ${c.peer_id}, '${c.peer_first_name} ${c.peer_last_name}', '${c.peer_username}', '${c.peer_avatar}')">
+                                <img src="${c.peer_avatar}" class="conv-avatar">
+                                <div class="conv-info">
+                                    <div class="conv-name">
+                                        <span>${c.peer_first_name} ${c.peer_last_name}</span>
+                                        ${unreadBadge}
+                                    </div>
+                                    <div class="conv-last-msg">${c.last_message || '[Nouvelle discussion]'}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        // 2. Recherche utilisateur par @username (Section 14)
+        function setupSearch() {
+            const input = document.getElementById('search-user-input');
+            const resultsBox = document.getElementById('search-results-list');
+
+            input.addEventListener('input', async () => {
+                const query = input.value.trim();
+                if (query.length < 2) {
+                    resultsBox.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        resultsBox.innerHTML = '';
+
+                        if (data.users.length === 0) {
+                            resultsBox.innerHTML = `<p style="padding:0.75rem; color:var(--text-muted); font-size:0.85rem;">Aucun utilisateur trouvé pour "${query}".</p>`;
+                        } else {
+                            data.users.forEach(u => {
+                                resultsBox.innerHTML += `
+                                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem; border-bottom:1px solid var(--border-glass-light);">
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <img src="${u.avatar_url}" style="width:36px; height:36px; border-radius:50%;">
+                                            <div>
+                                                <div style="font-weight:600; font-size:0.85rem;">${u.first_name} ${u.last_name}</div>
+                                                <div style="font-size:0.75rem; color:var(--primary);">${u.username}</div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="startDirectChat('${u.username}')">Message</button>
+                                    </div>
+                                `;
+                            });
+                        }
+                        resultsBox.style.display = 'block';
+                    }
+                } catch (err) {}
+            });
+        }
+
+        // Démarrer une conversation par username
+        async function startDirectChat(username) {
+            document.getElementById('search-results-list').style.display = 'none';
+            document.getElementById('search-user-input').value = '';
+
+            try {
+                const res = await fetch('/api/chat/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target_username: username })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    openConversation(data.conversation_id, data.peer.id, `${data.peer.first_name} ${data.peer.last_name}`, data.peer.username, data.peer.avatar_url);
+                    loadConversations();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {}
+        }
+
+        // 3. Ouvrir une conversation
+        async function openConversation(convId, peerId, peerName, peerUsername, peerAvatar) {
+            currentConversationId = convId;
+            currentPeer = { id: peerId, name: peerName, username: peerUsername, avatar: peerAvatar };
+
+            document.getElementById('active-chat-header').style.display = 'flex';
+            document.getElementById('chat-input-bar').style.display = 'flex';
+            document.getElementById('active-peer-name').textContent = peerName;
+            document.getElementById('active-peer-username').textContent = peerUsername;
+            document.getElementById('active-peer-avatar').src = peerAvatar;
+
+            if (socket) {
+                socket.emit('join_conversation', { conversation_id: convId });
+                socket.emit('mark_read', { conversation_id: convId });
+            }
+
+            loadMessages(convId);
+        }
+
+        async function loadMessages(convId) {
+            try {
+                const res = await fetch(`/api/chat/messages/${convId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const area = document.getElementById('messages-area');
+                    area.innerHTML = '';
+
+                    data.messages.forEach(msg => {
+                        area.appendChild(renderMessageBubble(msg));
+                    });
+                    area.scrollTop = area.scrollHeight;
+                }
+            } catch (err) {}
+        }
+
+        // Rendu d'une bulle de message
+        function renderMessageBubble(msg) {
+            const isSent = msg.sender_id === currentUser.id;
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
+            bubble.id = `msg-${msg.id}`;
+
+            let replyHtml = '';
+            if (msg.replyTo) {
+                replyHtml = `<div style="background:rgba(0,0,0,0.2); padding:0.4rem 0.6rem; border-left:3px solid var(--accent); margin-bottom:0.5rem; font-size:0.75rem; border-radius:4px;">
+                    <strong>@${msg.replyTo.sender_username}</strong>: ${msg.replyTo.text_content}
+                </div>`;
+            }
+
+            let attachmentsHtml = '';
+            if (msg.attachments && msg.attachments.length > 0) {
+                msg.attachments.forEach(att => {
+                    if (att.file_type === 'image') {
+                        attachmentsHtml += `<img src="${att.file_path}" style="max-width:100%; border-radius:var(--radius-sm); margin-top:0.5rem;">`;
+                    } else if (att.file_type === 'audio') {
+                        attachmentsHtml += `<audio controls src="${att.file_path}" style="width:100%; margin-top:0.5rem;"></audio>`;
+                    } else if (att.file_type === 'video') {
+                        attachmentsHtml += `<video controls src="${att.file_path}" style="max-width:100%; border-radius:var(--radius-sm); margin-top:0.5rem;"></video>`;
+                    } else {
+                        attachmentsHtml += `<a href="${att.file_path}" target="_blank" style="display:block; padding:0.5rem; background:rgba(0,0,0,0.2); margin-top:0.5rem; border-radius:4px; color:#fff;">📁 ${att.file_name}</a>`;
+                    }
+                });
+            }
+
+            let reactionsHtml = '';
+            if (msg.reactions && msg.reactions.length > 0) {
+                reactionsHtml = `<div style="display:flex; gap:0.25rem; margin-top:0.35rem; font-size:0.75rem;">
+                    ${msg.reactions.map(r => `<span style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:10px;">${r.emoji}</span>`).join('')}
+                </div>`;
+            }
+
+            let statusIcon = msg.status === 'read' ? '✓✓' : '✓';
+
+            bubble.innerHTML = `
+                ${replyHtml}
+                <div>${msg.text_content}</div>
+                ${attachmentsHtml}
+                ${reactionsHtml}
+                <div class="message-meta">
+                    <span>${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    ${isSent ? `<span>${statusIcon}</span>` : ''}
+                    <button onclick="setReplyTarget(${msg.id}, '${msg.sender_username}', '${msg.text_content.replace(/'/g, "\\'")}')" style="background:none; color:inherit; opacity:0.6; font-size:0.75rem; margin-left:0.5rem;">↩️</button>
+                    <button onclick="reactToMsg(${msg.id}, '❤️')" style="background:none; color:inherit; opacity:0.6; font-size:0.75rem;">❤️</button>
+                </div>
+            `;
+
+            return bubble;
+        }
+
+        // 4. Envoi de message textuel
+        function sendMessage(attachment = null) {
+            const input = document.getElementById('chat-message-input');
+            const text = input.value.trim();
+
+            if (!text && !attachment) return;
+            if (!currentConversationId) return;
+
+            const payload = {
+                conversation_id: currentConversationId,
+                text_content: text,
+                reply_to_id: replyToId,
+                attachments: attachment ? [attachment] : []
+            };
+
+            if (socket) {
+                socket.emit('send_message', payload);
+            }
+
+            input.value = '';
+            cancelReply();
+        }
+
+        document.getElementById('chat-message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // 5. Enregistreur vocal (Section 16)
+        function setupVoiceRecorder() {
+            const btn = document.getElementById('btn-voice-record');
+
+            btn.addEventListener('click', async () => {
+                if (!isRecording) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        mediaRecorder = new MediaRecorder(stream);
+                        audioChunks = [];
+
+                        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                        mediaRecorder.onstop = async () => {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                            const file = new File([audioBlob], `voice-note-${Date.now()}.wav`, { type: 'audio/wav' });
+
+                            // Uploader le fichier audio
+                            const formData = new FormData();
+                            formData.append('file', file);
+
+                            const res = await fetch('/api/chat/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (res.ok) {
+                                const data = await res.json();
+                                sendMessage(data.attachment);
+                                showToast('Note vocale envoyée !', 'success');
+                            }
+                        };
+
+                        mediaRecorder.start();
+                        isRecording = true;
+                        btn.classList.add('recording');
+                        showToast('🎙️ Enregistrement de la note vocale en cours...', 'info');
+                    } catch (err) {
+                        showToast('Permission microphone refusée', 'error');
+                    }
+                } else {
+                    mediaRecorder.stop();
+                    isRecording = false;
+                    btn.classList.remove('recording');
+                }
+            });
+        }
+
+        // 6. Gestion des fichiers joints (Section 17)
+        function triggerFileInput() {
+            document.getElementById('chat-file-input').click();
+        }
+
+        async function handleFileSelected(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/chat/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    sendMessage(data.attachment);
+                    showToast('Fichier envoyé !', 'success');
+                } else {
+                    const err = await res.json();
+                    showToast(err.error, 'error');
+                }
+            } catch (err) {
+                showToast('Erreur envoi fichier', 'error');
+            }
+        }
+
+        // Réactions et réponses
+        function setReplyTarget(id, username, text) {
+            replyToId = id;
+            document.getElementById('reply-target-text').textContent = `@${username}: ${text}`;
+            document.getElementById('reply-preview-box').style.display = 'flex';
+        }
+
+        function cancelReply() {
+            replyToId = null;
+            document.getElementById('reply-preview-box').style.display = 'none';
+        }
+
+        function reactToMsg(msgId, emoji) {
+            if (socket) {
+                socket.emit('react_message', { message_id: msgId, emoji });
+            }
+        }
+
+        // Écouteurs Socket.IO
+        function setupSocketListeners() {
+            if (!socket) return;
+
+            socket.on('new_message', (msg) => {
+                if (msg.conversation_id === currentConversationId) {
+                    const area = document.getElementById('messages-area');
+                    area.appendChild(renderMessageBubble(msg));
+                    area.scrollTop = area.scrollHeight;
+                }
+                loadConversations();
+            });
+
+            socket.on('message_reaction_updated', ({ message_id }) => {
+                if (currentConversationId) loadMessages(currentConversationId);
+            });
+        }
+    </script>
+</body>
+</html>

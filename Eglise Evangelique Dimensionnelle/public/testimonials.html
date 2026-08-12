@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Témoignages — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html" class="active">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+            <h1 class="section-title">Les Merveilles de Dieu — Témoignages</h1>
+            <p class="section-subtitle">"Ils l'ont vaincu à cause du sang de l'Agneau et à cause de la parole de leur témoignage." — Apocalypse 12:11</p>
+        </section>
+
+        <!-- Action Publier Témoignage -->
+        <div style="text-align:center; margin-bottom:3rem;">
+            <button class="btn btn-primary" onclick="openTestimonialModal()">✍️ Partager mon témoignage</button>
+        </div>
+
+        <!-- Filtre Modérateur / Staff (Section 18) -->
+        <div id="staff-filter-box" style="display:none; justify-content:center; gap:1rem; margin-bottom:2rem;">
+            <button class="btn btn-secondary btn-sm" onclick="loadTestimonials('approved')">Approuvés (Public)</button>
+            <button class="btn btn-secondary btn-sm" onclick="loadTestimonials('pending')" style="background:var(--accent-light); color:var(--accent);">⌛ En attente de modération</button>
+        </div>
+
+        <!-- Grid Témoignages -->
+        <div class="grid-container" id="testimonials-grid">
+            <!-- Dynamique via JS -->
+        </div>
+    </main>
+
+    <!-- Modale Soumission Témoignage -->
+    <div class="modal-overlay" id="modal-testimonial">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('modal-testimonial')">&times;</button>
+            <h2 style="margin-bottom:0.5rem;">Soumettre votre Témoignage</h2>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Votre témoignage sera examiné par l'équipe pastorale avant d'être publié publiquement.</p>
+            <form id="form-testimonial" enctype="multipart/form-data">
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Titre du témoignage</label>
+                    <input type="text" id="testi-title" placeholder="ex: Guérison divine miraculeuse" style="width:100%;" required>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Description complète</label>
+                    <textarea id="testi-desc" rows="5" placeholder="Racontez comment le Seigneur est intervenu..." style="width:100%;" required></textarea>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Type de média</label>
+                    <select id="testi-type" style="width:100%;">
+                        <option value="text">Texte seul</option>
+                        <option value="audio">Enregistrement Audio</option>
+                        <option value="video">Vidéo</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="font-size:0.85rem;">Fichier multimédia (Optionnel)</label>
+                    <input type="file" id="testi-media" style="width:100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Soumettre pour modération</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle.</p></div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadTestimonials();
+            checkStaffStatus();
+        });
+
+        async function checkStaffStatus() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (['moderator', 'pastor', 'admin'].includes(data.user.role)) {
+                        document.getElementById('staff-filter-box').style.display = 'flex';
+                    }
+                }
+            } catch (err) {}
+        }
+
+        async function loadTestimonials(statusFilter = '') {
+            try {
+                const res = await fetch(`/api/testimonials${statusFilter ? '?status=' + statusFilter : ''}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const grid = document.getElementById('testimonials-grid');
+                    grid.innerHTML = '';
+
+                    if (data.testimonials.length === 0) {
+                        grid.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Aucun témoignage trouvé.</p>`;
+                        return;
+                    }
+
+                    const isStaff = currentUser && ['moderator', 'pastor', 'admin'].includes(currentUser.role);
+
+                    data.testimonials.forEach(t => {
+                        let statusTag = t.status === 'pending' ? '<span style="color:var(--warning); font-weight:bold; font-size:0.8rem;">[En attente]</span>' : '';
+                        let staffControls = '';
+
+                        if (isStaff && t.status === 'pending') {
+                            staffControls = `
+                                <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+                                    <button class="btn btn-primary btn-sm" onclick="moderateTestimonial(${t.id}, 'approved')">Approuver</button>
+                                    <button class="btn btn-danger btn-sm" onclick="moderateTestimonial(${t.id}, 'rejected')">Rejeter</button>
+                                </div>
+                            `;
+                        } else if (isStaff) {
+                            staffControls = `<button class="btn btn-danger btn-sm" style="margin-top:1rem;" onclick="deleteTestimonial(${t.id})">Supprimer</button>`;
+                        }
+
+                        let mediaTag = '';
+                        if (t.media_url) {
+                            if (t.media_type === 'audio') {
+                                mediaTag = `<audio controls src="${t.media_url}" style="width:100%; margin-top:1rem;"></audio>`;
+                            } else if (t.media_type === 'video') {
+                                mediaTag = `<video controls src="${t.media_url}" style="width:100%; margin-top:1rem; border-radius:var(--radius-sm);"></video>`;
+                            }
+                        }
+
+                        grid.innerHTML += `
+                            <div class="card">
+                                <div class="card-body">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                                        <h3 class="card-title" style="margin:0;">${t.title}</h3>
+                                        ${statusTag}
+                                    </div>
+                                    <p class="card-text">"${t.description}"</p>
+                                    ${mediaTag}
+                                    <div class="card-meta" style="margin-top:1rem;">
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <img src="${t.avatar_url}" style="width:32px; height:32px; border-radius:50%;">
+                                            <span>${t.first_name} ${t.last_name} (${t.username})</span>
+                                        </div>
+                                        <span>${formatDate(t.created_at)}</span>
+                                    </div>
+                                    ${staffControls}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        function openTestimonialModal() {
+            if (!currentUser) {
+                showToast('Veuillez vous connecter pour publier un témoignage.', 'error');
+                openModal('modal-login');
+                return;
+            }
+            openModal('modal-testimonial');
+        }
+
+        document.getElementById('form-testimonial').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('title', document.getElementById('testi-title').value);
+            formData.append('description', document.getElementById('testi-desc').value);
+            formData.append('media_type', document.getElementById('testi-type').value);
+
+            const fileInput = document.getElementById('testi-media');
+            if (fileInput.files[0]) {
+                formData.append('media', fileInput.files[0]);
+            }
+
+            try {
+                const res = await fetch('/api/testimonials', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'success');
+                    closeModal('modal-testimonial');
+                    loadTestimonials();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Erreur soumission témoignage', 'error');
+            }
+        });
+
+        async function moderateTestimonial(id, status) {
+            try {
+                const res = await fetch(`/api/testimonials/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'success');
+                    loadTestimonials();
+                }
+            } catch (err) {}
+        }
+
+        async function deleteTestimonial(id) {
+            if (!confirm('Supprimer ce témoignage ?')) return;
+            try {
+                const res = await fetch(`/api/testimonials/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Témoignage supprimé', 'success');
+                    loadTestimonials();
+                }
+            } catch (err) {}
+        }
+    </script>
+</body>
+</html>

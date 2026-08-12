@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+            <h1 class="section-title">Profil & Compte Membre</h1>
+            <p class="section-subtitle">Gérez vos informations personnelles, votre photo de profil et votre mot de passe.</p>
+        </section>
+
+        <div style="display:grid; grid-template-columns:300px 1fr; gap:2.5rem;" id="profile-container">
+            <!-- Carte Résumé Profil -->
+            <div class="card" style="padding:2rem; text-align:center;">
+                <img src="/images/default-avatar.png" id="profile-avatar-img" style="width:140px; height:140px; border-radius:50%; object-fit:cover; border:3px solid var(--primary); margin-bottom:1rem;">
+                <h3 id="profile-full-name" class="card-title">---</h3>
+                <span id="profile-handle" style="color:var(--primary); font-weight:bold; font-size:0.95rem; display:block; margin-bottom:0.5rem;">---</span>
+                <span id="profile-role-badge" class="user-role-tag" style="margin-bottom:1.5rem; display:inline-block;">MEMBER</span>
+                <p id="profile-bio-text" style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">---</p>
+                <button class="btn btn-danger btn-sm" onclick="handleLogout()" style="width:100%;">🚪Déconnexion</button>
+            </div>
+
+            <!-- Formulaires d'Édition -->
+            <div>
+                <!-- Formulaire Informations & Photo -->
+                <div class="card" style="padding:2rem; margin-bottom:2rem;">
+                    <h3 class="card-title" style="margin-bottom:1.5rem;">✏️ Modifier mes informations</h3>
+                    <form id="form-update-profile" enctype="multipart/form-data">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                            <div>
+                                <label style="font-size:0.85rem;">Prénom</label>
+                                <input type="text" id="prof-fname" style="width:100%;" required>
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem;">Nom</label>
+                                <input type="text" id="prof-lname" style="width:100%;" required>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                            <div>
+                                <label style="font-size:0.85rem;">Nom d'utilisateur (@handle)</label>
+                                <input type="text" id="prof-username" style="width:100%;" required>
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem;">Téléphone</label>
+                                <input type="text" id="prof-phone" style="width:100%;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom:1rem;">
+                            <label style="font-size:0.85rem;">Biographie / Description</label>
+                            <textarea id="prof-bio" rows="3" style="width:100%;"></textarea>
+                        </div>
+                        <div style="margin-bottom:1.5rem;">
+                            <label style="font-size:0.85rem;">Changer la photo de profil</label>
+                            <input type="file" id="prof-avatar-file" accept="image/*" style="width:100%;">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Mettre à jour le profil</button>
+                    </form>
+                </div>
+
+                <!-- Formulaire Changement de Mot de Passe -->
+                <div class="card" style="padding:2rem;">
+                    <h3 class="card-title" style="margin-bottom:1.5rem;">🔒 Sécurité & Mot de Passe</h3>
+                    <form id="form-update-password">
+                        <div style="margin-bottom:1rem;">
+                            <label style="font-size:0.85rem;">Mot de passe actuel</label>
+                            <input type="password" id="pass-current" style="width:100%;" required>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                            <div>
+                                <label style="font-size:0.85rem;">Nouveau mot de passe</label>
+                                <input type="password" id="pass-new" style="width:100%;" required>
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem;">Confirmation</label>
+                                <input type="password" id="pass-confirm" style="width:100%;" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Changer le mot de passe</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle.</p></div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            if (!currentUser) {
+                showToast('Veuillez vous connecter pour accéder à votre profil.', 'error');
+                setTimeout(() => window.location.href = '/', 1200);
+                return;
+            }
+
+            loadProfileFields();
+            initProfileForms();
+        });
+
+        function loadProfileFields() {
+            document.getElementById('profile-avatar-img').src = currentUser.avatar_url;
+            document.getElementById('profile-full-name').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            document.getElementById('profile-handle').textContent = currentUser.username;
+            document.getElementById('profile-role-badge').textContent = currentUser.role.toUpperCase();
+            document.getElementById('profile-bio-text').textContent = currentUser.bio || 'Aucune biographie rédigée.';
+
+            document.getElementById('prof-fname').value = currentUser.first_name;
+            document.getElementById('prof-lname').value = currentUser.last_name;
+            document.getElementById('prof-username').value = currentUser.username;
+            document.getElementById('prof-phone').value = currentUser.phone || '';
+            document.getElementById('prof-bio').value = currentUser.bio || '';
+        }
+
+        function initProfileForms() {
+            // Form Profil
+            document.getElementById('form-update-profile').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append('first_name', document.getElementById('prof-fname').value);
+                formData.append('last_name', document.getElementById('prof-lname').value);
+                formData.append('username', document.getElementById('prof-username').value);
+                formData.append('phone', document.getElementById('prof-phone').value);
+                formData.append('bio', document.getElementById('prof-bio').value);
+
+                const avatarFile = document.getElementById('prof-avatar-file').files[0];
+                if (avatarFile) formData.append('avatar', avatarFile);
+
+                try {
+                    const res = await fetch('/api/users/profile', {
+                        method: 'PUT',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message, 'success');
+                        currentUser = data.user;
+                        loadProfileFields();
+                        renderAuthUI(true);
+                    } else {
+                        showToast(data.error, 'error');
+                    }
+                } catch (err) {
+                    showToast('Erreur mise à jour profil', 'error');
+                }
+            });
+
+            // Form Mot de Passe
+            document.getElementById('form-update-password').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const current_password = document.getElementById('pass-current').value;
+                const new_password = document.getElementById('pass-new').value;
+                const confirm_password = document.getElementById('pass-confirm').value;
+
+                try {
+                    const res = await fetch('/api/auth/password', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ current_password, new_password, confirm_password })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message, 'success');
+                        document.getElementById('form-update-password').reset();
+                    } else {
+                        showToast(data.error, 'error');
+                    }
+                } catch (err) {
+                    showToast('Erreur changement mot de passe', 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

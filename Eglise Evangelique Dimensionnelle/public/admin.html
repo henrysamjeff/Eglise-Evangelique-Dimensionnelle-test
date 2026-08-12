@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Administrateur — ÉglisAven</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+            <h1 class="section-title">Tableau de Bord Administrateur</h1>
+            <p class="section-subtitle">Gestion centralisée des membres, des rôles RBAC, des témoignages, événements et contenus de l'église.</p>
+        </section>
+
+        <!-- Cartes Statistiques (Section 22) -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:3rem;" id="admin-stats-container">
+            <div class="card" style="padding:1.5rem; text-align:center;">
+                <span style="font-size:2rem; display:block;">👥</span>
+                <h2 id="stat-users" style="font-family:var(--font-heading); color:var(--primary); font-size:2.2rem; margin:0.25rem 0;">-</h2>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Utilisateurs inscrits</span>
+            </div>
+            <div class="card" style="padding:1.5rem; text-align:center;">
+                <span style="font-size:2rem; display:block;">⌛</span>
+                <h2 id="stat-testimonials" style="font-family:var(--font-heading); color:var(--warning); font-size:2.2rem; margin:0.25rem 0;">-</h2>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Témoignages en attente</span>
+            </div>
+            <div class="card" style="padding:1.5rem; text-align:center;">
+                <span style="font-size:2rem; display:block;">📖</span>
+                <h2 id="stat-sermons" style="font-family:var(--font-heading); color:var(--secondary); font-size:2.2rem; margin:0.25rem 0;">-</h2>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Prédications publiées</span>
+            </div>
+            <div class="card" style="padding:1.5rem; text-align:center;">
+                <span style="font-size:2rem; display:block;">🎓</span>
+                <h2 id="stat-trainings" style="font-family:var(--font-heading); color:var(--info); font-size:2.2rem; margin:0.25rem 0;">-</h2>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Formations bibliques</span>
+            </div>
+            <div class="card" style="padding:1.5rem; text-align:center;">
+                <span style="font-size:2rem; display:block;">📅</span>
+                <h2 id="stat-events" style="font-family:var(--font-heading); color:var(--success); font-size:2.2rem; margin:0.25rem 0;">-</h2>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Événements</span>
+            </div>
+            <div class="card" style="padding:1.5rem; text-align:center;">
+                <span style="font-size:2rem; display:block;">⚠️</span>
+                <h2 id="stat-reports" style="font-family:var(--font-heading); color:var(--danger); font-size:2.2rem; margin:0.25rem 0;">-</h2>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Signalements à traiter</span>
+            </div>
+        </div>
+
+        <!-- Section Gestion des Utilisateurs & Rôles RBAC -->
+        <section class="card" style="padding:2rem; margin-bottom:3rem;">
+            <h2 class="card-title" style="margin-bottom:1.5rem;">👥 Gestion des Utilisateurs & Attributions de Rôles</h2>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.9rem;">
+                    <thead>
+                        <tr style="border-bottom:2px solid var(--border-glass); color:var(--text-muted);">
+                            <th style="padding:0.75rem;">Utilisateur</th>
+                            <th style="padding:0.75rem;">Email</th>
+                            <th style="padding:0.75rem;">Téléphone</th>
+                            <th style="padding:0.75rem;">Inscrit le</th>
+                            <th style="padding:0.75rem;">Rôle Actuel</th>
+                            <th style="padding:0.75rem;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-users-table">
+                        <!-- Dynamique via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section Modération des Témoignages En Attente -->
+        <section class="card" style="padding:2rem; margin-bottom:3rem;">
+            <h2 class="card-title" style="margin-bottom:1.5rem;">⌛ Témoignages En Attente de Validation</h2>
+            <div class="grid-container" id="admin-pending-testimonials">
+                <!-- Dynamique via JS -->
+            </div>
+        </section>
+
+        <!-- Section Signalements -->
+        <section class="card" style="padding:2rem;">
+            <h2 class="card-title" style="margin-bottom:1.5rem;">⚠️ Signalements de Contenu</h2>
+            <div id="admin-reports-list">
+                <!-- Dynamique via JS -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle. Administration Sécurisée.</p></div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            if (!currentUser || !['admin', 'pastor', 'moderator'].includes(currentUser.role)) {
+                showToast('Accès refusé. Réservé à l\'équipe d\'administration.', 'error');
+                setTimeout(() => window.location.href = '/', 1200);
+                return;
+            }
+
+            loadAdminStats();
+            loadAdminUsers();
+            loadPendingTestimonials();
+            loadReports();
+        });
+
+        async function loadAdminStats() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('stat-users').textContent = data.stats.totalUsers;
+                    document.getElementById('stat-testimonials').textContent = data.stats.pendingTestimonials;
+                    document.getElementById('stat-sermons').textContent = data.stats.totalSermons;
+                    document.getElementById('stat-trainings').textContent = data.stats.totalTrainings;
+                    document.getElementById('stat-events').textContent = data.stats.totalEvents;
+                    document.getElementById('stat-reports').textContent = data.stats.pendingReports;
+                }
+            } catch (err) {}
+        }
+
+        async function loadAdminUsers() {
+            if (currentUser.role !== 'admin') return;
+
+            try {
+                const res = await fetch('/api/admin/users');
+                if (res.ok) {
+                    const data = await res.json();
+                    const table = document.getElementById('admin-users-table');
+                    table.innerHTML = '';
+
+                    data.users.forEach(u => {
+                        let roleOptions = data.roles.map(r => `
+                            <option value="${r.id}" ${r.id === u.role_id ? 'selected' : ''}>${r.name.toUpperCase()}</option>
+                        `).join('');
+
+                        table.innerHTML += `
+                            <tr style="border-bottom:1px solid var(--border-glass-light);">
+                                <td style="padding:0.75rem; display:flex; align-items:center; gap:0.5rem;">
+                                    <img src="${u.avatar_url}" style="width:32px; height:32px; border-radius:50%;">
+                                    <div>
+                                        <strong>${u.first_name} ${u.last_name}</strong><br>
+                                        <span style="font-size:0.75rem; color:var(--primary);">${u.username}</span>
+                                    </div>
+                                </td>
+                                <td style="padding:0.75rem;">${u.email}</td>
+                                <td style="padding:0.75rem;">${u.phone || '-'}</td>
+                                <td style="padding:0.75rem;">${formatDate(u.created_at)}</td>
+                                <td style="padding:0.75rem;">
+                                    <select onchange="updateUserRole(${u.id}, this.value)" style="padding:0.3rem 0.5rem; font-size:0.8rem;">
+                                        ${roleOptions}
+                                    </select>
+                                </td>
+                                <td style="padding:0.75rem;">
+                                    <span class="user-role-tag">${u.role_name}</span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        async function updateUserRole(userId, roleId) {
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role_id: parseInt(roleId) })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'success');
+                    loadAdminUsers();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Erreur modification rôle', 'error');
+            }
+        }
+
+        async function loadPendingTestimonials() {
+            try {
+                const res = await fetch('/api/testimonials?status=pending');
+                if (res.ok) {
+                    const data = await res.json();
+                    const grid = document.getElementById('admin-pending-testimonials');
+                    grid.innerHTML = '';
+
+                    if (data.testimonials.length === 0) {
+                        grid.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">Aucun témoignage en attente.</p>`;
+                        return;
+                    }
+
+                    data.testimonials.forEach(t => {
+                        grid.innerHTML += `
+                            <div class="card" style="padding:1.5rem;">
+                                <h4 class="card-title">${t.title}</h4>
+                                <p class="card-text">"${t.description}"</p>
+                                <div class="card-meta">
+                                    <span>Membre : ${t.username}</span>
+                                    <span>${formatDate(t.created_at)}</span>
+                                </div>
+                                <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+                                    <button class="btn btn-primary btn-sm" onclick="moderate(${t.id}, 'approved')">Approuver</button>
+                                    <button class="btn btn-danger btn-sm" onclick="moderate(${t.id}, 'rejected')">Rejeter</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        async function moderate(id, status) {
+            try {
+                const res = await fetch(`/api/testimonials/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                if (res.ok) {
+                    showToast(`Témoignage ${status === 'approved' ? 'publié' : 'rejeté'}`, 'success');
+                    loadPendingTestimonials();
+                    loadAdminStats();
+                }
+            } catch (err) {}
+        }
+
+        async function loadReports() {
+            try {
+                const res = await fetch('/api/admin/reports');
+                if (res.ok) {
+                    const data = await res.json();
+                    const container = document.getElementById('admin-reports-list');
+                    container.innerHTML = '';
+
+                    if (data.reports.length === 0) {
+                        container.innerHTML = `<p style="color:var(--text-muted);">Aucun signalement.</p>`;
+                        return;
+                    }
+
+                    data.reports.forEach(r => {
+                        container.innerHTML += `
+                            <div style="padding:1rem; border-bottom:1px solid var(--border-glass-light); display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong>Signalé par : ${r.reporter_username}</strong><br>
+                                    <span style="color:var(--text-muted); font-size:0.85rem;">Motif : ${r.reason}</span>
+                                </div>
+                                <div>
+                                    <button class="btn btn-secondary btn-sm" onclick="resolveReport(${r.id}, 'dismissed')">Ignorer</button>
+                                    <button class="btn btn-primary btn-sm" onclick="resolveReport(${r.id}, 'reviewed')">Traité</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        async function resolveReport(id, status) {
+            try {
+                const res = await fetch(`/api/admin/reports/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                if (res.ok) {
+                    showToast('Signalement mis à jour', 'info');
+                    loadReports();
+                    loadAdminStats();
+                }
+            } catch (err) {}
+        }
+    </script>
+</body>
+</html>

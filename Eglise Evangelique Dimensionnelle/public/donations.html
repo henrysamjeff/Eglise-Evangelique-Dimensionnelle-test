@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faire un don — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html" class="active">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+            <h1 class="section-title">Soutenir l'Œuvre de Dieu</h1>
+            <p class="section-subtitle">"Que chacun donne comme il l'a résolu en son cœur, sans tristesse ni contrainte ; car Dieu aime celui qui donne avec joie." — 2 Corinthiens 9:7</p>
+        </section>
+
+        <!-- Avertissement de Sécurité Obligatoire (Section 8) -->
+        <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 3rem; display: flex; gap: 1rem; align-items: flex-start;">
+            <span style="font-size: 2rem;">🛡️</span>
+            <div>
+                <h4 style="color: var(--warning); font-family: var(--font-heading); margin-bottom: 0.5rem; font-size: 1.1rem;">Avis de Sécurité Important</h4>
+                <p id="donation-warning-text" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5;">
+                    Assurez-vous d'utiliser uniquement les coordonnées officielles fournies ci-dessous avant d'effectuer tout paiement.
+                </p>
+            </div>
+        </div>
+
+        <!-- Méthodes de Dons -->
+        <div class="grid-container" id="donation-methods-grid">
+            <!-- Dynamique via JS -->
+        </div>
+
+        <!-- FAQ Dons -->
+        <section style="margin-top: 4rem; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 2.5rem;">
+            <h2 class="section-title" style="font-size: 1.8rem; text-align: left; margin-bottom: 1.5rem;">Transparence & Utilisation des Fonds</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                <div>
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🕊️ Missions & Évangélisation</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Financement des campagnes d'évangélisation en plein air et soutien aux missionnaires sur le terrain.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--secondary); margin-bottom: 0.5rem;">🤝 Actions Sociales & Solidarité</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Distribution de fournitures et d'aides alimentaires d'urgence aux familles dans le besoin.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent); margin-bottom: 0.5rem;">🏢 Développement des Infrastructures</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Entretien des locaux, équipements audio/vidéo et expansion de notre auditorium.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle. Tous droits réservés.</p></div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/config');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('donation-warning-text').textContent = data.donations.warningNotice;
+
+                    const grid = document.getElementById('donation-methods-grid');
+                    grid.innerHTML = '';
+
+                    data.donations.methods.forEach(m => {
+                        grid.innerHTML += `
+                            <div class="card" style="padding: 1.75rem;">
+                                <span class="card-badge" style="position:static; display:inline-block; margin-bottom:1rem;">${m.name}</span>
+                                <h3 class="card-title" style="font-size:1.4rem;">${m.recipient}</h3>
+                                <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">${m.instructions}</p>
+                                <div style="background:rgba(0,0,0,0.4); border:1px solid var(--border-glass); padding:0.75rem 1rem; border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                                    <span style="font-family:monospace; font-size:1.05rem; color:var(--text-main); font-weight:bold;">${m.account}</span>
+                                    <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('${m.account}')">Copier</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast(`Coordonnée copiée : ${text}`, 'success');
+        }
+    </script>
+</body>
+</html>

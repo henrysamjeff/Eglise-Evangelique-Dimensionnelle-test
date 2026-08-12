@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédications — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html" class="active">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+    <h1 class="section-title">
+        Bibliothèque de Prédications & Enseignements
+    </h1>
+
+    <p class="section-subtitle">
+        Nourrissez votre foi avec nos messages vidéos et enseignements audios spirituels.
+    </p>
+</section>
+
+<!-- TA VIDÉO -->
+<div style="max-width:900px; margin:0 auto 3rem;">
+    <video
+        controls
+        playsinline
+        preload="metadata"
+        style="
+            width:100%;
+            border-radius:16px;
+            display:block;
+            background:#000;
+            box-shadow:0 15px 40px rgba(0,0,0,.2);
+        "
+    >
+        <source src="public/videos/direction.mp4" type="video/mp4">
+        Votre navigateur ne prend pas en charge la lecture vidéo.
+    </video>
+</div>
+
+        <!-- Actions Admin / Pastor -->
+        <div id="admin-sermon-actions" style="display:none; text-align:right; margin-bottom:1.5rem;">
+            <button class="btn btn-primary" onclick="openModal('modal-sermon')">➕ Publier une Prédication</button>
+        </div>
+
+        <!-- Recherche & Filtres -->
+        <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:2.5rem;">
+            <div style="position:relative; flex:1; min-width:280px;">
+                <input type="text" id="sermon-search-input" placeholder="🔍 Rechercher par titre" style="width:100%;">
+            </div>
+            <div style="display:flex; gap:0.75rem;">
+                <select id="filter-sermon-cat">
+                    <option value="Toutes">Toutes les catégories</option>
+                    <option value="Vidéos">Vidéos</option>
+                    <option value="Enseignements">Enseignements</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Grid Prédications -->
+        <div class="grid-container" id="sermons-grid">
+            <!-- Dynamique via JS -->
+        </div>
+
+        <!-- Pagination -->
+        <div style="text-align:center; margin-top:3rem;" id="sermons-pagination">
+            <!-- Dynamique via JS -->
+        </div>
+    </main>
+
+    <!-- Modale Lecteur Média -->
+    <div class="modal-overlay" id="modal-player">
+        <div class="modal-card" style="max-width:800px; padding:1.5rem;">
+            <button class="modal-close" onclick="closePlayerModal()">&times;</button>
+            <h3 id="player-title" style="margin-bottom:1rem;">---</h3>
+            <div id="player-container" style="width:100%; height:400px; background:#000; border-radius:var(--radius-sm); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <!-- Dynamique (Iframe ou Audio) -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Publication Prédication (Admin / Pastor) -->
+    <div class="modal-overlay" id="modal-sermon">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('modal-sermon')">&times;</button>
+            <h2 style="margin-bottom:1rem;">Publier une Prédication</h2>
+            <form id="form-sermon" enctype="multipart/form-data">
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Titre de la prédication</label>
+                    <input type="text" id="sermon-title" style="width:100%;" required>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Description</label>
+                    <textarea id="sermon-desc" rows="3" style="width:100%;" required></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label style="font-size:0.85rem;">Prédicateur / Orateur</label>
+                        <input type="text" id="sermon-preacher" value="Pasteur Roody Fevry" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;">Date du message</label>
+                        <input type="date" id="sermon-date" style="width:100%;" required>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label style="font-size:0.85rem;">Catégorie</label>
+                        <select id="sermon-cat" style="width:100%;">
+                            <option value="Vidéos">Vidéos</option>
+                            <option value="Enseignements">Enseignements</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;">Type Média</label>
+                        <select id="sermon-media-type" style="width:100%;">
+                            <option value="video">Vidéo</option>
+                            <option value="audio">Audio</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Lien Média (Ex: YouTube Embed ou Fichier)</label>
+                    <input type="file" id="sermon-media-file" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="width:100%;">
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="font-size:0.85rem;">Miniature Image (Optionnel)</label>
+                    <input type="file" id="sermon-thumb" accept="image/jpg" style="width:100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Publier le message</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle.</p></div>
+    </footer>
+
+    <script>
+        let currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadSermons();
+            setupFilters();
+            setupStaffActions();
+        });
+
+        async function setupStaffActions() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (['admin', 'pastor'].includes(data.user.role)) {
+                        document.getElementById('admin-sermon-actions').style.display = 'block';
+                    }
+                }
+            } catch (err) {}
+        }
+
+        async function loadSermons() {
+            const search = document.getElementById('sermon-search-input').value;
+            const category = document.getElementById('filter-sermon-cat').value;
+
+            try {
+                const res = await fetch(`/api/sermons?search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}&page=${currentPage}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const grid = document.getElementById('sermons-grid');
+                    grid.innerHTML = '';
+
+                    if (data.sermons.length === 0) {
+                        grid.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Aucune prédication trouvée.</p>`;
+                        return;
+                    }
+
+                    const isStaff = currentUser && ['admin', 'pastor'].includes(currentUser.role);
+
+                    data.sermons.forEach(s => {
+                        let deleteBtn = isStaff ? `<button class="btn btn-danger btn-sm" onclick="deleteSermon(${s.id})">Supprimer</button>` : '';
+
+                        grid.innerHTML += `
+                            <div class="card">
+                                <div class="card-img-wrapper">
+                                    <img src="${s.thumbnail_url}" alt="${s.title}">
+                                    <span class="card-badge">${s.media_type === 'video' ? '📹 Vidéo' : '🎧 Audio'}</span>
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="card-title">${s.title}</h3>
+                                    <p class="card-text">${s.description}</p>
+                                    <div class="card-meta">
+                                        <span>👤 ${s.preacher_name}</span>
+                                        <span>📅 ${formatDate(s.sermon_date)}</span>
+                                    </div>
+                                    <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
+                                        <button class="btn btn-primary btn-sm" onclick="playMedia('${s.title.replace(/'/g, "\\'")}', '${s.media_url}', '${s.media_type}')">Écouter / Regarder</button>
+                                        ${deleteBtn}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        function setupFilters() {
+            document.getElementById('sermon-search-input').addEventListener('input', () => {
+                currentPage = 1;
+                loadSermons();
+            });
+            document.getElementById('filter-sermon-cat').addEventListener('change', () => {
+                currentPage = 1;
+                loadSermons();
+            });
+        }
+
+        function playMedia(title, url, type) {
+            document.getElementById('player-title').textContent = title;
+            const container = document.getElementById('player-container');
+
+            if (type === 'video' || url.includes('youtube') || url.includes('embed')) {
+                container.innerHTML = `<iframe src="${url}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
+            } else {
+                container.innerHTML = `<audio controls autoplay src="${url}" style="width:90%;"></audio>`;
+            }
+
+            openModal('modal-player');
+        }
+
+        function closePlayerModal() {
+            document.getElementById('player-container').innerHTML = '';
+            closeModal('modal-player');
+        }
+
+        document.getElementById('form-sermon').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('title', document.getElementById('sermon-title').value);
+            formData.append('description', document.getElementById('sermon-desc').value);
+            formData.append('preacher_name', document.getElementById('sermon-preacher').value);
+            formData.append('sermon_date', document.getElementById('sermon-date').value);
+            formData.append('category', document.getElementById('sermon-cat').value);
+            formData.append('media_type', document.getElementById('sermon-media-type').value);
+            formData.append('media_url', document.getElementById('sermon-media-url').value);
+
+            const fileInput = document.getElementById('sermon-thumb');
+            if (fileInput.files[0]) {
+                formData.append('thumbnail', fileInput.files[0]);
+            }
+
+            try {
+                const res = await fetch('/api/sermons', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'success');
+                    closeModal('modal-sermon');
+                    loadSermons();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Erreur publication prédication', 'error');
+            }
+        });
+
+        async function deleteSermon(id) {
+            if (!confirm('Supprimer cette prédication ?')) return;
+            try {
+                const res = await fetch(`/api/sermons/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Prédication supprimée', 'success');
+                    loadSermons();
+                }
+            } catch (err) {}
+        }
+    </script>
+</body>
+</html>

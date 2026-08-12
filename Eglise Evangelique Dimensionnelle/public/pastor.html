@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Pasteur — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+            <h1 class="section-title">Espace Pastorat & Enseignement</h1>
+            <p class="section-subtitle">Outils réservés aux pasteurs pour la création de formations bibliques, la diffusion d'annonces et l'édification de l'église.</p>
+        </section>
+
+        <!-- Actions Pastorales Rapides -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:2rem; margin-bottom:3rem;">
+            <div class="card" style="padding:2rem; text-align:center;">
+                <span style="font-size:2.5rem; display:block; margin-bottom:0.75rem;">🎓</span>
+                <h3 class="card-title">Publier une Formation</h3>
+                <p class="card-text">Créez un nouveau module de formation biblique avec vidéo et support PDF.</p>
+                <a href="/trainings.html" class="btn btn-primary btn-sm" style="width:100%;">Accéder aux Formations</a>
+            </div>
+
+            <div class="card" style="padding:2rem; text-align:center;">
+                <span style="font-size:2.5rem; display:block; margin-bottom:0.75rem;">📢</span>
+                <h3 class="card-title">Diffuser une Annonce</h3>
+                <p class="card-text">Rédigez une annonce officielle pour informer immédiatement tous les membres.</p>
+                <button class="btn btn-primary btn-sm" onclick="openModal('modal-announcement')" style="width:100%;">Créer une Annonce</button>
+            </div>
+
+            <div class="card" style="padding:2rem; text-align:center;">
+                <span style="font-size:2.5rem; display:block; margin-bottom:0.75rem;">📖</span>
+                <h3 class="card-title">Ajouter une Prédication</h3>
+                <p class="card-text">Mettez en ligne le dernier culte ou message en vidéo / audio.</p>
+                <a href="/sermons.html" class="btn btn-primary btn-sm" style="width:100%;">Gérer les Prédications</a>
+            </div>
+        </div>
+
+        <!-- Section Annonces Récentes -->
+        <section class="card" style="padding:2rem;">
+            <h2 class="card-title" style="margin-bottom:1.5rem;">📢 Annonces Diffusées à la Communauté</h2>
+            <div id="pastor-announcements-list">
+                <!-- Dynamique via JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modale Création d'Annonce -->
+    <div class="modal-overlay" id="modal-announcement">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('modal-announcement')">&times;</button>
+            <h2 style="margin-bottom:1rem;">Créer une Annonce Officielle</h2>
+            <form id="form-announcement">
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Titre de l'annonce</label>
+                    <input type="text" id="anno-title" placeholder="ex: Modification horaire du culte" style="width:100%;" required>
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="font-size:0.85rem;">Message détaillé</label>
+                    <textarea id="anno-message" rows="4" style="width:100%;" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Diffuser l'Annonce</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle. Espace Pasteur.</p></div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            if (!currentUser || !['pastor', 'admin'].includes(currentUser.role)) {
+                showToast('Accès réservé au rôle Pasteur ou Admin.', 'error');
+                setTimeout(() => window.location.href = '/', 1200);
+                return;
+            }
+
+            loadPastorAnnouncements();
+            initAnnouncementForm();
+        });
+
+        async function loadPastorAnnouncements() {
+            try {
+                const res = await fetch('/api/announcements');
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = document.getElementById('pastor-announcements-list');
+                    list.innerHTML = '';
+
+                    if (data.announcements.length === 0) {
+                        list.innerHTML = `<p style="color:var(--text-muted);">Aucune annonce diffusée.</p>`;
+                        return;
+                    }
+
+                    data.announcements.forEach(a => {
+                        list.innerHTML += `
+                            <div style="padding:1rem; border-bottom:1px solid var(--border-glass-light); display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <h4 style="color:var(--primary); font-family:var(--font-heading); margin-bottom:0.25rem;">${a.title}</h4>
+                                    <p style="color:var(--text-muted); font-size:0.9rem;">${a.message}</p>
+                                    <span style="font-size:0.75rem; color:var(--text-dim);">Par ${a.author_name} le ${formatDate(a.created_at)}</span>
+                                </div>
+                                <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${a.id})">Supprimer</button>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        function initAnnouncementForm() {
+            document.getElementById('form-announcement').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('anno-title').value;
+                const message = document.getElementById('anno-message').value;
+
+                try {
+                    const res = await fetch('/api/announcements', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, message })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message, 'success');
+                        closeModal('modal-announcement');
+                        document.getElementById('form-announcement').reset();
+                        loadPastorAnnouncements();
+                    } else {
+                        showToast(data.error, 'error');
+                    }
+                } catch (err) {
+                    showToast('Erreur publication annonce', 'error');
+                }
+            });
+        }
+
+        async function deleteAnnouncement(id) {
+            if (!confirm('Supprimer cette annonce ?')) return;
+            try {
+                const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Annonce supprimée', 'success');
+                    loadPastorAnnouncements();
+                }
+            } catch (err) {}
+        }
+    </script>
+</body>
+</html>

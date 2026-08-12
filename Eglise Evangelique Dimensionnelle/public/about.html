@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>À propos — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html" class="active">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+
+        <!-- Hero Title -->
+        <section class="section-header">
+            <h1 class="section-title">Découvrez Église Évangelique Dimensionnelle</h1>
+            <p class="section-subtitle church-slogan-text">Notre histoire, notre vision, notre mission et l'équipe qui sert la communauté.</p>
+        </section>
+
+        <!-- Histoire, Vision, Mission Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+            <div class="card" style="padding: 2rem;">
+                <h3 class="card-title" style="color:var(--primary);">Notre Histoire</h3>
+                <p class="card-text" id="about-history">Chargement de l'histoire...</p>
+            </div>
+            <div class="card" style="padding: 2rem;">
+                <h3 class="card-title" style="color:var(--secondary);">Notre Vision</h3>
+                <p class="card-text" id="about-vision">Chargement de la vision...</p>
+            </div>
+            <div class="card" style="padding: 2rem;">
+                <h3 class="card-title" style="color:var(--accent);">Notre Mission</h3>
+                <p class="card-text" id="about-mission">Chargement de la mission...</p>
+            </div>
+        </div>
+
+        <!-- Section Pasteur Principal -->
+        <section class="card" style="padding: 3rem; flex-direction: row; align-items: center; gap: 3rem; margin-bottom: 4rem; flex-wrap: wrap;">
+            <img src="/images/pastor-photo.jpg" id="about-pastor-photo" style="width: 220px; height: 220px; border-radius: var(--radius-lg); object-fit: cover; border: 4px solid var(--primary);">
+            <div style="flex: 1; min-width: 280px;">
+                <span class="hero-tag">Notre Pasteur Principal</span>
+                <h2 class="section-title" id="about-pastor-name" style="text-align: left; font-size: 2.2rem; margin-bottom: 0.5rem;">Pasteur Roody Fevry</h2>
+                <span id="about-pastor-title" style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 1rem;">Pasteur Principal & Fondateur</span>
+                <p id="about-pastor-bio" style="color: var(--text-muted); font-size: 1.05rem;">
+                    Chargement de la biographie du pasteur...
+                </p>
+            </div>
+        </section>
+
+        <!-- Responsables & Équipe -->
+        <section style="margin-bottom: 4rem;">
+            <div class="section-header">
+                <h2 class="section-title">Responsables & Équipe Pastoral</h2>
+                <p class="section-subtitle">Les serviteurs engagés pour l'édification de la communauté.</p>
+            </div>
+            <div class="grid-container" id="leadership-grid">
+                <!-- Dynamique via JS -->
+            </div>
+        </section>
+
+        <!-- Localisation & Vidéo de Direction -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+            <!-- Carte Google Maps -->
+            <div class="card" style="padding: 1.5rem;">
+                <h3 class="card-title" style="margin-bottom: 1rem;">Emplacement & Carte</h3>
+                <div style="width: 100%; height: 320px; border-radius: var(--radius-sm); overflow: hidden;">
+                    <iframe id="about-maps-iframe" src="about:blank" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+
+            <!-- Vidéo de Direction -->
+            <div class="card" style="padding: 1.5rem;">
+                <h3 class="card-title" style="margin-bottom: 1rem;">Comment nous rejoindre ?</h3>
+                <div style="width: 100%; height: 320px; border-radius: var(--radius-sm); overflow: hidden;">
+                    <iframe id="about-direction-video" src="about:blank" width="100%" height="100%" style="border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 Église Évangelique Dimensionnelle. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/config');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('about-history').textContent = data.church.history;
+                    document.getElementById('about-vision').textContent = data.church.vision;
+                    document.getElementById('about-mission').textContent = data.church.mission;
+                    document.getElementById('about-pastor-name').textContent = data.church.pastorName;
+                    document.getElementById('about-pastor-title').textContent = data.church.pastorTitle;
+                    document.getElementById('about-pastor-bio').textContent = data.church.pastorBio;
+                    document.getElementById('about-pastor-photo').src = data.church.pastorPhoto;
+
+                    document.getElementById('about-maps-iframe').src = data.contact.googleMapsEmbedUrl;
+                    document.getElementById('about-direction-video').src = data.contact.directionVideoUrl;
+
+                    // Charger les responsables
+                    const grid = document.getElementById('leadership-grid');
+                    grid.innerHTML = '';
+                    data.leadership.forEach(leader => {
+                        grid.innerHTML += `
+                            <div class="card">
+                                <div class="card-img-wrapper" style="height: 260px;">
+                                    <img src="${leader.photo}" alt="${leader.name}">
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="card-title">${leader.name}</h3>
+                                    <span style="color:var(--primary); font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block;">${leader.role}</span>
+                                    <p class="card-text">${leader.description}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        });
+    </script>
+</body>
+</html>

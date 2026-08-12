@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formations Bibliques — Église Évangelique Dimensionnelle</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html" class="active">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-wrapper">
+        <section class="section-header">
+            <h1 class="section-title">Académie & Formations Pastorales</h1>
+            <p class="section-subtitle">Développez vos connaissances bibliques et votre leadership spirituel avec nos cours structurés.</p>
+        </section>
+
+        <!-- Actions Pastor / Admin -->
+        <div id="pastor-training-actions" style="display:none; text-align:right; margin-bottom:1.5rem;">
+            <button class="btn btn-primary" onclick="openModal('modal-training')">🎓 Ajouter une Formation (Pasteur)</button>
+        </div>
+
+        <!-- Grid Formations -->
+        <div class="grid-container" id="trainings-grid">
+            <!-- Dynamique via JS -->
+        </div>
+    </main>
+
+    <!-- Modale Création Formation (Réservée Pasteur & Admin) -->
+    <div class="modal-overlay" id="modal-training">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('modal-training')">&times;</button>
+            <h2 style="margin-bottom:1rem;">Créer un Module de Formation</h2>
+            <form id="form-training" enctype="multipart/form-data">
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Titre du cours / module</label>
+                    <input type="text" id="train-title" placeholder="ex: Fondements du Discipulat" style="width:100%;" required>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Description détaillée</label>
+                    <textarea id="train-desc" rows="4" style="width:100%;" required></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label style="font-size:0.85rem;">Auteur / Formateur</label>
+                        <input type="text" id="train-author" value="Pasteur David Kouamé" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;">Catégorie</label>
+                        <select id="train-cat" style="width:100%;">
+                            <option value="Discipulat">Discipulat</option>
+                            <option value="Leadership">Leadership Chrétien</option>
+                            <option value="Théologie">Théologie Pratique</option>
+                            <option value="Vie de Famille">Vie de Famille</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">File Vidéo ou Média</label>
+                    <input type="file" id="train-media-file" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="width:100%;">
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Document PDF du Cours (Téléchargeable)</label>
+                    <input type="file" id="train-pdf" accept=".pdf,.doc,.docx" style="width:100%;">
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="font-size:0.85rem;">Image de couverture (Optionnelle)</label>
+                    <input type="file" id="train-thumb" accept="image/*" style="width:100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Publier la Formation</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-bottom"><p>&copy; 2026 Église Évangelique Dimensionnelle.</p></div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadTrainings();
+            checkPastorPermission();
+        });
+
+        async function checkPastorPermission() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (['pastor', 'admin'].includes(data.user.role)) {
+                        document.getElementById('pastor-training-actions').style.display = 'block';
+                    }
+                }
+            } catch (err) {}
+        }
+
+        async function loadTrainings() {
+            try {
+                const res = await fetch('/api/trainings');
+                if (res.ok) {
+                    const data = await res.json();
+                    const grid = document.getElementById('trainings-grid');
+                    grid.innerHTML = '';
+
+                    if (data.trainings.length === 0) {
+                        grid.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Aucune formation disponible actuellement.</p>`;
+                        return;
+                    }
+
+                    const isPastor = currentUser && ['pastor', 'admin'].includes(currentUser.role);
+
+                    data.trainings.forEach(t => {
+                        let pdfLink = t.pdf_document_url ? `<a href="${t.pdf_document_url}" download class="btn btn-secondary btn-sm">📄 Fiche PDF</a>` : '';
+                        let pastorControls = isPastor ? `<button class="btn btn-danger btn-sm" onclick="deleteTraining(${t.id})">Supprimer</button>` : '';
+
+                        grid.innerHTML += `
+                            <div class="card">
+                                <div class="card-img-wrapper">
+                                    <img src="${t.thumbnail_url}" alt="${t.title}">
+                                    <span class="card-badge">${t.category}</span>
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="card-title">${t.title}</h3>
+                                    <p class="card-text">${t.description}</p>
+                                    <div class="card-meta">
+                                        <span>🎓 Formateur : ${t.author_name}</span>
+                                        <span>📅 ${formatDate(t.created_at)}</span>
+                                    </div>
+                                    <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; gap:0.5rem;">
+                                            ${t.media_url ? `<a href="${t.media_url}" target="_blank" class="btn btn-primary btn-sm">Visionner</a>` : ''}
+                                            ${pdfLink}
+                                        </div>
+                                        ${pastorControls}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        document.getElementById('form-training').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('title', document.getElementById('train-title').value);
+            formData.append('description', document.getElementById('train-desc').value);
+            formData.append('author_name', document.getElementById('train-author').value);
+            formData.append('category', document.getElementById('train-cat').value);
+            formData.append('media_url', document.getElementById('train-media-url').value);
+
+            const thumbFile = document.getElementById('train-thumb').files[0];
+            if (thumbFile) formData.append('thumbnail', thumbFile);
+
+            const pdfFile = document.getElementById('train-pdf').files[0];
+            if (pdfFile) formData.append('pdf_document', pdfFile);
+
+            try {
+                const res = await fetch('/api/trainings', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message, 'success');
+                    closeModal('modal-training');
+                    loadTrainings();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Erreur publication formation', 'error');
+            }
+        });
+
+        async function deleteTraining(id) {
+            if (!confirm('Supprimer ce module de formation ?')) return;
+            try {
+                const res = await fetch(`/api/trainings/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Formation supprimée', 'success');
+                    loadTrainings();
+                }
+            } catch (err) {}
+        }
+    </script>
+</body>
+</html>

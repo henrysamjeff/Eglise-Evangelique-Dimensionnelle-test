@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Église Évangelique Dimensionnelle — Église Chrétienne & Communauté de Foi dans une autre Dimension</title>
+    <link rel="icon" type="image/png" href="/images/3.png">
+    <meta name="description" content="Bienvenue à l'église Église Évangelique Dimensionnelle. Une communauté vibrante d'amour, d'espoir et d'édification spirituelle en Jésus-Christ.">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/main.js"></script>
+</head>
+<body>
+
+    <!-- 1. Intro Splash Screen (Section 3) -->
+    <div id="splash-intro">
+        <div class="splash-content">
+            <img src="/images/1.png" alt="Logo Église Évangelique Dimensionnelle" class="splash-logo church-logo-img">
+            <h1 class="splash-title church-name-text">Moi et ma maison, nous servirons l’Éternel</h1>
+            <p class="splash-slogan church-slogan-text"></p>
+            <div class="splash-loader">
+                <div class="splash-progress"></div>
+            </div>
+            <button id="btn-skip-splash" class="btn-skip-intro">Passer l'introduction</button>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <img src="/images/2.png" alt="Logo" class="church-logo-img">
+                <span class="nav-brand-name church-name-text">Église Évangelique Dimensionnelle</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/" class="active">Accueil</a></li>
+                <li><a href="/about.html">À propos</a></li>
+                <li><a href="/events.html">Événements</a></li>
+                <li><a href="/sermons.html">Prédications</a></li>
+                <li><a href="/trainings.html">Formations</a></li>
+                <li><a href="/testimonials.html">Témoignages</a></li>
+                <li><a href="/donations.html">Faire un don</a></li>
+                <li><a href="/contact.html">Nous trouver</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div id="nav-auth-actions"></div>
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <span class="hero-tag">Bienvenue dans le site officiel de l'Église Évangelique Dimensionnelle</span>
+                <h1 class="hero-title">Vivez l'Amour et la Puissance de la Parole de Dieu dans une autre Dimensions</h1>
+                <p class="hero-subtitle church-slogan-text">Une communauté vibrante d'amour, de foi, d'espoir et de transformation spirituelle.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="openModal('modal-register')">Nous rejoindre</button>
+                    <a href="/about.html" class="btn btn-secondary">Découvrir notre église</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prochain Événement & Dernière Prédication -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+            <!-- Card Prochain Événement -->
+            <div class="card" id="next-event-card">
+                <div class="card-img-wrapper">
+                    <img src="/images/event-culte.jpg" alt="Événement" id="next-event-img">
+                    <span class="card-badge">Prochain Événement</span>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title" id="next-event-title">Chargement de l'événement...</h3>
+                    <p class="card-text" id="next-event-desc">Découvrez notre prochain rassemblement et joignez-vous à nous.</p>
+                    <div class="card-meta">
+                        <span id="next-event-date">Samedi</span>
+                        <span id="next-event-loc">📍 Auditorium Principal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Dernière Prédication -->
+            <div class="card" id="latest-sermon-card">
+                <div class="card-img-wrapper">
+                    <img src="/images/sermon-grace.jpg" alt="Prédication" id="latest-sermon-img">
+                    <span class="card-badge" style="color:var(--secondary);">Dernière Prédication</span>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title" id="latest-sermon-title">Chargement de la prédication...</h3>
+                    <p class="card-text" id="latest-sermon-desc">Écoutez ou visionnez le dernier message inspiré par l'Esprit.</p>
+                    <div class="card-meta">
+                        <span id="latest-sermon-preacher">👤 Pasteur Roody Fevry</span>
+                        <a href="/sermons.html" class="btn btn-secondary btn-sm">Regarder</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Pasteur -->
+        <section class="card" style="padding: 3rem; flex-direction: row; align-items: center; gap: 3rem; margin-bottom: 4rem; flex-wrap: wrap;">
+            <img src="/images/pastor-photo.jpg" alt="Pasteur Principal" style="width: 200px; height: 200px; border-radius: var(--radius-full); object-fit: cover; border: 4px solid var(--primary);">
+            <div style="flex: 1; min-width: 280px;">
+                <span class="hero-tag" style="background: var(--accent-light); color: var(--accent); border-color: var(--accent);">Message du Pasteur</span>
+                <h2 class="section-title" style="text-align: left; font-size: 2rem; margin-bottom: 1rem;">Bienvenue à l'Église Évangelique Dimensionnelle</h2>
+                <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 1.5rem;">
+                    "Mon désir ardent est de voir chaque personne découvrir son identité en Christ et expérimenter la plénitude de Sa grâce. Que vous soyez en quête de vérités spirituelles ou à la recherche d'une famille spirituelle chaleureuse, vous avez votre place parmi nous."
+                </p>
+                <h4 style="color: var(--text-main); font-weight: 700;">Pasteur Roody Fevry</h4>
+                <span style="color: var(--text-dim); font-size: 0.9rem;">Pasteur Principal & Fondateur</span>
+            </div>
+        </section>
+
+        <!-- Témoignages Récents (Section 18) -->
+        <section style="margin-bottom: 4rem;">
+            <div class="section-header">
+                <h2 class="section-title">Témoignages de la Grâce</h2>
+                <p class="section-subtitle">Découvrez comment Dieu agit puissamment dans la vie de nos membres.</p>
+            </div>
+            <div class="grid-container" id="home-testimonials-grid">
+                <!-- Dynamique via JS -->
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="/testimonials.html" class="btn btn-secondary">Voir tous les témoignages</a>
+            </div>
+        </section>
+
+        <!-- Section Soutenir l'Église (Section 8) -->
+        <section class="hero-section" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.8), rgba(88, 28, 135, 0.8)); text-align: center; margin-bottom: 2rem;">
+            <h2 class="section-title" style="font-size: 2.2rem; margin-bottom: 1rem;">Soutenir l'Œuvre de Dieu</h2>
+            <p class="hero-subtitle" style="max-width: 700px; margin: 0 auto 2rem;">Vos dons et dîmes permettent de soutenir nos projets d'évangélisation, les œuvres sociales et le rayonnement de l'Évangile.</p>
+            <a href="/donations.html" class="btn btn-primary">Faire un don en ligne</a>
+        </section>
+
+    </main>
+
+    <!-- Footer Professionnel (Section 4) -->
+    <footer class="main-footer">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4 class="church-name-text">Église Évangelique Dimensionnelle</h4>
+                <p class="church-slogan-text">Une communauté d'amour, de foi, d'espoir et de transformation spirituelle.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Navigation Rapide</h4>
+                <ul>
+                    <li><a href="/about.html">Notre Histoire & Vision</a></li>
+                    <li><a href="/events.html">Nos Cultes & Événements</a></li>
+                    <li><a href="/sermons.html">Bibliothèque de Prédications</a></li>
+                    <li><a href="/trainings.html">Formations Bibliques</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Contact & Accès</h4>
+                <p id="footer-address">📍 1250 Avenue de la Foi, Montréal, QC</p>
+                <p id="footer-phone">📞 +1 (514) 555-0199</p>
+                <p id="footer-email">✉️ contact@eglisaven.org</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Église Évangelique Dimensionnelle. Tous droits réservés. Développé pour la gloire de Dieu.</p>
+        </div>
+    </footer>
+
+    <!-- Modale Connexion -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('modal-login')">&times;</button>
+            <h2 style="font-family:var(--font-heading); margin-bottom:0.5rem;">Connexion Member</h2>
+            <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Accédez à votre espace membre et à la messagerie privée.</p>
+            <form id="form-login">
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.4rem; font-size:0.875rem;">Email ou Nom d'utilisateur (@handle)</label>
+                    <input type="text" id="login-identifier" style="width:100%;" placeholder="ex: @henrysam ou member@eglisaven.org" required>
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; margin-bottom:0.4rem; font-size:0.875rem;">Mot de passe</label>
+                    <input type="password" id="login-password" style="width:100%;" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale Inscription -->
+    <div class="modal-overlay" id="modal-register">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('modal-register')">&times;</button>
+            <h2 style="font-family:var(--font-heading); margin-bottom:0.5rem;">Rejoindre Église Évangelique Dimensionnelle</h2>
+            <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Créez votre profil et connectez-vous à la communauté.</p>
+            <form id="form-register" enctype="multipart/form-data">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label style="font-size:0.85rem;">Prénom</label>
+                        <input type="text" id="reg-fname" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;">Nom</label>
+                        <input type="text" id="reg-lname" style="width:100%;" required>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Nom d'utilisateur unique (@handle)</label>
+                    <input type="text" id="reg-username" style="width:100%;" placeholder="@henrysam" required>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem;">Email</label>
+                    <input type="email" id="reg-email" style="width:100%;" placeholder="votreemail@domaine.com" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                    <div>
+                        <label style="font-size:0.85rem;">Mot de passe</label>
+                        <input type="password" id="reg-pass" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;">Confirmation</label>
+                        <input type="password" id="reg-pass-confirm" style="width:100%;" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Créer mon compte</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Logique spécifique à l'Accueil
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadHomeData();
+            initAuthForms();
+        });
+
+        async function loadHomeData() {
+            // 1. Charger Prochain Événement
+            try {
+                const res = await fetch('/api/events/next');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.event) {
+                        document.getElementById('next-event-title').textContent = data.event.title;
+                        document.getElementById('next-event-desc').textContent = data.event.description;
+                        document.getElementById('next-event-date').textContent = `📅 ${formatDate(data.event.event_date)} à ${data.event.event_time}`;
+                        document.getElementById('next-event-loc').textContent = `📍 ${data.event.location}`;
+                        document.getElementById('next-event-img').src = data.event.image_url;
+                    }
+                }
+            } catch (err) {}
+
+            // 2. Charger Dernière Prédication
+            try {
+                const res = await fetch('/api/sermons/latest');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.sermon) {
+                        document.getElementById('latest-sermon-title').textContent = data.sermon.title;
+                        document.getElementById('latest-sermon-desc').textContent = data.sermon.description;
+                        document.getElementById('latest-sermon-preacher').textContent = `👤 ${data.sermon.preacher_name}`;
+                        document.getElementById('latest-sermon-img').src = data.sermon.thumbnail_url;
+                    }
+                }
+            } catch (err) {}
+
+            // 3. Charger Témoignages récents
+            try {
+                const res = await fetch('/api/testimonials');
+                if (res.ok) {
+                    const data = await res.json();
+                    const grid = document.getElementById('home-testimonials-grid');
+                    grid.innerHTML = '';
+
+                    const sample = data.testimonials.slice(0, 3);
+                    if (sample.length === 0) {
+                        grid.innerHTML = `<p style="color:var(--text-muted); text-align:center;">Aucun témoignage publié pour le moment.</p>`;
+                    } else {
+                        sample.forEach(t => {
+                            grid.innerHTML += `
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="card-title">${t.title}</h3>
+                                        <p class="card-text">"${t.description.substring(0, 140)}..."</p>
+                                        <div class="card-meta">
+                                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                                <img src="${t.avatar_url}" style="width:30px; height:30px; border-radius:50%;">
+                                                <span>${t.first_name} ${t.last_name} (${t.username})</span>
+                                            </div>
+                                            <span>${formatDate(t.created_at)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+            } catch (err) {}
+        }
+
+        function initAuthForms() {
+            // Form Connexion
+            document.getElementById('form-login').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const identifier = document.getElementById('login-identifier').value;
+                const password = document.getElementById('login-password').value;
+
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ identifier, password })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        showToast(data.message, 'success');
+                        closeModal('modal-login');
+                        setTimeout(() => location.reload(), 600);
+                    } else {
+                        showToast(data.error, 'error');
+                    }
+                } catch (err) {
+                    showToast('Erreur serveur lors de la connexion', 'error');
+                }
+            });
+
+            // Form Inscription
+            document.getElementById('form-register').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const first_name = document.getElementById('reg-fname').value;
+                const last_name = document.getElementById('reg-lname').value;
+                const username = document.getElementById('reg-username').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-pass').value;
+                const confirm_password = document.getElementById('reg-pass-confirm').value;
+
+                try {
+                    const res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ first_name, last_name, username, email, password, confirm_password })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        showToast(data.message, 'success');
+                        closeModal('modal-register');
+                        setTimeout(() => location.reload(), 600);
+                    } else {
+                        showToast(data.error, 'error');
+                    }
+                } catch (err) {
+                    showToast('Erreur lors de l\'inscription', 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
